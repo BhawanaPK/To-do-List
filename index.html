@@ -1,0 +1,67 @@
+<script>
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+  function renderTasks() {
+    const list = document.getElementById('task-list');
+    list.innerHTML = '';
+
+    tasks.forEach((task, index) => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+      li.innerHTML = `
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="check-${index}" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+          <label class="form-check-label ms-2 ${task.completed ? 'text-decoration-line-through text-muted' : ''}" for="check-${index}">
+            ${task.text}
+          </label>
+        </div>
+        <div>
+          <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="toggleTask(${index})">Complete</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editTask(${index})">Edit</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTask(${index})">Delete</button>
+        </div>
+      `;
+
+      list.appendChild(li);
+    });
+
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
+  function addTask(text) {
+    console.log('Adding task:', text); // Debug
+    tasks.push({ text, completed: false });
+    renderTasks();
+  }
+
+  function toggleTask(index) {
+    tasks[index].completed = !tasks[index].completed;
+    renderTasks();
+  }
+
+  function editTask(index) {
+    const newText = prompt('Edit task:', tasks[index].text);
+    if (newText !== null && newText.trim() !== '') {
+      tasks[index].text = newText.trim();
+      renderTasks();
+    }
+  }
+
+  function deleteTask(index) {
+    tasks.splice(index, 1);
+    renderTasks();
+  }
+
+  document.getElementById('task-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const input = document.getElementById('task-input');
+    const taskText = input.value.trim();
+    if (taskText !== '') {
+      addTask(taskText);
+      input.value = '';
+    }
+  });
+
+  renderTasks();
+</script>
