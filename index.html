@@ -41,12 +41,24 @@
     <div class="card p-4">
       <h2 class="text-center mb-4">🌸 To-Do List</h2>
       <form id="task-form" class="mb-3">
-        <div class="input-group">
-          <input type="text" id="task-input" class="form-control" placeholder="Add a new task..." required>
-          <button class="btn btn-pastel" type="submit">Add</button>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <input type="text" id="task-input" class="form-control" placeholder="Task" required>
+          </div>
+          <div class="col-md-2">
+            <input type="date" id="due-date" class="form-control" placeholder="Due Date">
+          </div>
+          <div class="col-md-3">
+            <input type="text" id="category" class="form-control" placeholder="Category">
+          </div>
+          <div class="col-md-3">
+            <input type="text" id="note" class="form-control" placeholder="Note">
+          </div>
+        </div>
+        <div class="mt-3 text-end">
+          <button class="btn btn-pastel" type="submit">Add Task</button>
         </div>
       </form>
-
       <ul class="list-group" id="task-list"></ul>
     </div>
   </div>
@@ -58,25 +70,33 @@
       localStorage.setItem('tasks', JSON.stringify(tasks));
     }
 
+    function formatDateTime(date) {
+      return new Date(date).toLocaleString();
+    }
+
     function renderTasks() {
       const list = document.getElementById('task-list');
       list.innerHTML = '';
 
       tasks.forEach((task, index) => {
         const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.className = 'list-group-item';
 
         li.innerHTML = `
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="check-${index}" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
-            <label class="form-check-label ms-2 ${task.completed ? 'text-decoration-line-through text-muted' : ''}" for="check-${index}">
-              ${task.text}
-            </label>
-          </div>
-          <div>
-            <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="toggleTask(${index})">Complete</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editTask(${index})">Edit</button>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTask(${index})">Delete</button>
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="check-${index}" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+              <label class="form-check-label ms-2 ${task.completed ? 'text-decoration-line-through text-muted' : ''}" for="check-${index}">
+                <strong>${task.text}</strong> <br>
+                <small>Category: ${task.category || '—'} | Note: ${task.note || '—'}</small><br>
+                <small>Due: ${task.dueDate || '—'} | Created: ${formatDateTime(task.createdAt)} | Last Modified: ${formatDateTime(task.updatedAt)}</small>
+              </label>
+            </div>
+            <div class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="toggleTask(${index})">Complete</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="editTask(${index})">Edit</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTask(${index})">Delete</button>
+            </div>
           </div>
         `;
 
@@ -86,20 +106,38 @@
       saveTasksToLocalStorage();
     }
 
-    function addTask(text) {
-      tasks.push({ text, completed: false });
+    function addTask(text, dueDate, category, note) {
+      const now = new Date().toISOString();
+      tasks.push({
+        text,
+        dueDate,
+        category,
+        note,
+        completed: false,
+        createdAt: now,
+        updatedAt: now
+      });
       renderTasks();
     }
 
     function toggleTask(index) {
       tasks[index].completed = !tasks[index].completed;
+      tasks[index].updatedAt = new Date().toISOString();
       renderTasks();
     }
 
     function editTask(index) {
       const newText = prompt('Edit task:', tasks[index].text);
-      if (newText !== null && newText.trim() !== '') {
+      const newDue = prompt('Edit due date (YYYY-MM-DD):', tasks[index].dueDate || '');
+      const newCat = prompt('Edit category:', tasks[index].category || '');
+      const newNote = prompt('Edit note:', tasks[index].note || '');
+
+      if (newText && newText.trim() !== '') {
         tasks[index].text = newText.trim();
+        tasks[index].dueDate = newDue;
+        tasks[index].category = newCat;
+        tasks[index].note = newNote;
+        tasks[index].updatedAt = new Date().toISOString();
         renderTasks();
       }
     }
@@ -111,11 +149,14 @@
 
     document.getElementById('task-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      const input = document.getElementById('task-input');
-      const taskText = input.value.trim();
-      if (taskText !== '') {
-        addTask(taskText);
-        input.value = '';
+      const text = document.getElementById('task-input').value.trim();
+      const dueDate = document.getElementById('due-date').value;
+      const category = document.getElementById('category').value.trim();
+      const note = document.getElementById('note').value.trim();
+
+      if (text !== '') {
+        addTask(text, dueDate, category, note);
+        document.getElementById('task-form').reset();
       }
     });
 
